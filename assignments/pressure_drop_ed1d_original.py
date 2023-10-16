@@ -32,6 +32,7 @@ from idaes.core.util.model_statistics import (
 import idaes.core.util.model_statistics as stats
 from idaes.core.util.constants import Constants
 import idaes.core.util.scaling as iscale
+from idaes.core.util.scaling import list_badly_scaled_variables
 import idaes.core.util.model_diagnostics as m_diag
 import idaes.logger as idaeslog
 import openpyxl
@@ -104,79 +105,15 @@ def main():
     m.fs.unit.inlet_concentrate.pressure[0].fix(5003485)
     m.fs.unit.inlet_concentrate.temperature.fix(298.15)
 
-    # for ind, c in m.fs.unit.diluate.properties.items():
-    #     if ind == [0,0]:
-    #         c.calculate_state({
-    #                     ("flow_vol_phase","Liq"):3.25e-4,
-    #                     ("conc_mass_phase_comp",("Liq","Na_+")):3.932,
-    #                     ("conc_mass_phase_comp",("Liq","Cl_-")):6.068},
-    #                     hold_state=True)
-    # for ind, c in m.fs.unit.concentrate.properties.items():
-    #     if ind == [0,0]:
-    #         c.calculate_state({
-    #                     ("flow_vol_phase","Liq"):3.25e-4,
-    #                     ("conc_mass_phase_comp",("Liq","Na_+")):3.932,
-    #                     ("conc_mass_phase_comp",("Liq","Cl_-")):6.068},
-    #                     hold_state=True)
+    m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(110)
+    m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(0.342)
+    m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.342)
+    m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(110)
+    m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(0.342)
+    m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.342)
 
-    m.fs.unit.concentrate.properties[0, 0].calculate_state(
-        {
-            ("flow_vol_phase", "Liq"): 3.25e-4,
-            ("conc_mmoass_phase_comp", ("Liq", "Na_+")): 3.932,
-            ("conc_mass_phase_comp", ("Liq", "Cl_-")): 6.068,
-        },
-        hold_state=True,
-    )
+    # m.fs.unit.outlet_diluate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(2.8272e-2)
 
-    # m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(5.777e4)
-    # m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(4.449e-8)
-    # m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(4.449e-8)
-    # m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(5.777e4)
-    # m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(4.449e-8)
-    # m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(4.449e-8)
-    #
-    # m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(110)
-    # m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(0.342)
-    # m.fs.unit.inlet_diluate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.342)
-    # m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(110)
-    # m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(0.342)
-    # m.fs.unit.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(0.342)
-    # m.fs.unit.inlet_diluate.flow_vol_phase[0, "Liq", "H2O"].fix(5.2e-4)
-    # m.fs.unit.inlet_diluate.conc_mol_phase_comp[0, "Liq", "Na_+"].fix(34.188)
-    # m.fs.unit.inlet_diluate.conc_mol_phase_comp[0, "Liq", "Cl_-"].fix(34.188)
-    # m.fs.unit.inlet_concentrate.flow_vol_phase[0, "Liq", "H2O"].fix(5.2e-4)
-    # m.fs.unit.inlet_concentrate.conc_mol_phase_comp[0, "Liq", "Na_+"].fix(34.188)
-    # m.fs.unit.inlet_concentrate.conc_mol_phase_comp[0, "Liq", "Cl_-"].fix(34.188)
-
-    # flow_solute, in molar / s
-    # 4.449007529089664e-08
-    # flow_water, in molar / s
-    # 5777.777777777777
-
-    #
-    init_arg = {
-        ("flow_vol_phase", ("Liq")): 5.2e-4,
-        ("conc_mol_phase_comp", ("Liq", "Na_+")): 34.188,
-        ("conc_mol_phase_comp", ("Liq", "Cl_-")): 34.188,
-    }  # Corresponding to C_feed = 2g/L
-    # m.fs.unit.concentrate.calculate_state(
-    #     init_arg,
-    #     hold_state=True
-    # )
-    # m.fs.unit.concentrate.properties[0, 0].calculate_state({
-    #     ("flow_vol_phase", "Liq"): 3.25e-4,
-    #     ("conc_mass_phase_comp", ("Liq", "Na_+")): 3.932,
-    #     ("conc_mass_phase_comp", ("Liq", "Cl_-")): 6.068},
-    #     hold_state=True)
-    #
-    # m.fs.unit.concentrate.properties.calculate_state(
-    #     init_arg,
-    #     hold_state=True
-    # )
-    # m.fs.unit.inlet_diluate.properties.calculate_state(
-    #     init_arg,
-    #     hold_state=True
-    # )
     m.fs.unit.water_trans_number_membrane["cem"].fix(5.8)
     m.fs.unit.water_trans_number_membrane["aem"].fix(4.3)
     m.fs.unit.water_permeability_membrane["cem"].fix(2.16e-14)
@@ -197,8 +134,7 @@ def main():
     m.fs.unit.solute_diffusivity_membrane["aem", "Na_+"].fix(1.25e-10)
     m.fs.unit.solute_diffusivity_membrane["cem", "Cl_-"].fix(1.8e-10)
     m.fs.unit.solute_diffusivity_membrane["aem", "Cl_-"].fix(1.25e-10)
-    # m.fs.unit.solute_diffusivity_membrane["cem", "N"].fix(1.8e-10)
-    # m.fs.unit.solute_diffusivity_membrane["aem", "N"].fix(1.25e-10)
+
     m.fs.unit.ion_trans_number_membrane["cem", "Na_+"].fix(1)
     m.fs.unit.ion_trans_number_membrane["aem", "Na_+"].fix(0)
     m.fs.unit.ion_trans_number_membrane["cem", "Cl_-"].fix(0)
@@ -245,10 +181,10 @@ def main():
     iscale.set_scaling_factor(m.fs.unit.voltage_applied, 0.1)
     # m.fs.unit.diluate.display()
     iscale.calculate_scaling_factors(m.fs.unit)
-    m.fs.unit.initialize(optarg=solver.options, outlvl=idaeslog.DEBUG)
     # m.fs.unit.initialize(optarg=solver.options, outlvl=idaeslog.DEBUG)
-
-    print("BADLY SCALED VARS & CONSTRAINS")
+    # print("list---------",list_badly_scaled_variables(m))
+    print("BADLY SCALED VARS & CONSTRAINTS")
+    print("------------------------------------------------------")
     badly_scaled_var_values = {
         var.name: val
         for (var, val) in iscale.badly_scaled_var_generator(
@@ -257,6 +193,8 @@ def main():
     }
     for j, k in badly_scaled_var_values.items():
         print(j, ":", k)
+    print("end of badly scaled var and constraints")
+    print("------------------------------------------------------")
 
     results = solver.solve(m, tee=False, symbolic_solver_labels=True)
     print(
@@ -265,6 +203,9 @@ def main():
         )
     )
     print("NEAR-BOUND VAR")
+
+    m.fs.unit.initialize(optarg=solver.options, outlvl=idaeslog.DEBUG)
+
     for i in variables_near_bounds_generator(m):
         print(i.name, i.value)
     dh = m_diag.DegeneracyHunter(m)

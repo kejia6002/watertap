@@ -1,5 +1,6 @@
 #  this is a file to sim ED_1d model with only an ED stack
 #  import modules
+
 from pyomo.environ import (
     ConcreteModel,
     SolverFactory,
@@ -29,7 +30,7 @@ from idaes.core.util.model_statistics import (
     variables_near_bounds_generator,
     total_constraints_set,
 )
-
+from idaes.core.util import DiagnosticsToolbox
 from idaes.core.solvers import get_solver
 import idaes.core.util.scaling as iscale
 import idaes.core.util.model_diagnostics as m_diag
@@ -90,16 +91,26 @@ def main():
         "flow_mol_phase_comp", 0.1, index=("Liq", "H20")
     )
     m.fs.properties.set_default_scaling(
-        "flow_mol_phase_comp", 1e2, index=("Liq", "Na_+")
+        "flow_mol_phase_comp", 5e2, index=("Liq", "Na_+")
     )
     m.fs.properties.set_default_scaling(
-        "flow_mol_phase_comp", 1e2, index=("Liq", "Cl_-")
+        "flow_mol_phase_comp", 5e2, index=("Liq", "Cl_-")
     )
     # call the calculate_scaling_factors function
-    iscale.set_scaling_factor(m.fs.EDstack.cell_width, 5)
-    iscale.set_scaling_factor(m.fs.EDstack.cell_length, 5)
-    iscale.set_scaling_factor(m.fs.EDstack.cell_pair_num, 5)
-    iscale.set_scaling_factor(m.fs.EDstack.voltage_applied, 5)
+    # iscale.set_scaling_factor(m.fs.EDstack.cell_width, 5)
+    # iscale.set_scaling_factor(m.fs.EDstack.cell_length, 0.1)
+    # iscale.set_scaling_factor(m.fs.EDstack.cell_pair_num, 5)
+    # iscale.set_scaling_factor(m.fs.EDstack.water_permeability_membrane["cem"], 1e20)
+    # iscale.set_scaling_factor(m.fs.EDstack.water_permeability_membrane["aem"], 1e20)
+    # for key in m.fs.EDstack.current_density_x.keys():
+    # iscale.set_scaling_factor(m.fs.EDstack.current_density_x[key], 1e2)
+    # iscale.set_scaling_factor(m.fs.EDstack.voltage_applied_x[key], 1e-6)
+
+    iscale.set_scaling_factor(m.fs.EDstack.cell_width, 1)
+    iscale.set_scaling_factor(m.fs.EDstack.cell_length, 1)
+    iscale.set_scaling_factor(m.fs.EDstack.cell_pair_num, 0.01)
+    iscale.set_scaling_factor(m.fs.EDstack.voltage_applied, 0.2)
+
     iscale.calculate_scaling_factors(m.fs.EDstack)
 
     # specify the model by fixing parameters
@@ -113,15 +124,15 @@ def main():
     m.fs.EDstack.inlet_concentrate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(4.449e-2)
 
     # m.fs.EDstack.outlet_diluate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(28.74)
-    m.fs.EDstack.outlet_diluate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(2.449e-2)
+    m.fs.EDstack.outlet_diluate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(2.35e-2)
     # m.fs.EDstack.outlet_diluate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(4.449e-3)
     # m.fs.EDstack.outlet_concentrate.flow_mol_phase_comp[0, "Liq", "H2O"].fix(28.74)
-    # m.fs.EDstack.outlet_concentrate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(4.449e-3)
+    # m.fs.EDstack.outlet_concentrate.flow_mol_phase_comp[0, "Liq", "Na_+"].fix(5.449e-2)
     # m.fs.EDstack.outlet_concentrate.flow_mol_phase_comp[0, "Liq", "Cl_-"].fix(4.449e-3)
 
     # Corresponding to C_feed = 5g/L, flow rate = 5.2e-4 m3/s
     # the flow rate were lower
-    m.fs.EDstack.diluate.properties[0, 0].flow_vol_phase["Liq"]
+    # m.fs.EDstack.diluate.properties[0, 0].flow_vol_phase["Liq"]
     m.fs.costing.cost_process()
     m.fs.costing.add_annual_water_production(
         m.fs.EDstack.diluate.properties[0, 0].flow_vol_phase["Liq"]
@@ -137,15 +148,14 @@ def main():
     m.fs.EDstack.inlet_concentrate.temperature.fix(298.15)
 
     #  operation condition (voltage or current)
-    # m.fs.EDstack.voltage_applied.fix(0.58)
-
-    m.fs.EDstack.cell_pair_num.fix(250)
-    # m.fs.EDstack.cell_pair_num.fix(12)
+    m.fs.EDstack.voltage_applied.fix(15)
+    # m.fs.EDstack.cell_width.fix(0.197)
+    m.fs.EDstack.cell_length.fix(0.69)
+    m.fs.EDstack.cell_pair_num.fix(50)
 
     m.fs.EDstack.current_utilization.fix(1)
     m.fs.EDstack.channel_height.fix(2.7e-4)
-    m.fs.EDstack.cell_width.fix(0.197)
-    m.fs.EDstack.cell_length.fix(1.68)
+
     m.fs.EDstack.electrodes_resistance.fix(0)
     m.fs.EDstack.spacer_porosity.fix(0.83)
 
@@ -185,12 +195,31 @@ def main():
     # m.fs.EDstack.pprint()
     print("degree of freedoms", degrees_of_freedom(m))
     # initialize
+
+    print("BADLY SCALED VARS & CONSTRAINTS")
+    print("------------------------------------------------------")
+
+    badly_scaled_var_values = {
+        var.name: val
+        for (var, val) in iscale.badly_scaled_var_generator(
+            m, large=100, small=0.01, zero=1e-10
+        )
+    }
+    for j, k in badly_scaled_var_values.items():
+        print(j, ":", k)
+    print("end of badly scaled var and constraints")
+    print("------------------------------------------------------")
+
+    # dt = DiagnosticsToolbox(m)
+    # dt.report_structural_issues()
+    # # dt.report_numerical_issues()
+
     solver = get_solver()
     m.fs.EDstack.initialize(optarg=solver.options)
     m.fs.EDstack.report()
     # solve the model
-    # results = solver.solve(m)
-    # print(results.solver.termination_condition)
+    results = solver.solve(m)
+    print(results.solver.termination_condition)
     # optimize the model
     """
     7.1) Unfix some degrees of freedom to provide the problem with decision variables, variable_name.unfix().
@@ -220,6 +249,7 @@ def main():
     m.fs.EDstack.cell_length.pprint()
     m.fs.EDstack.cell_pair_num.pprint()
     m.fs.EDstack.voltage_applied.pprint()
+    # print("calculator:",(4.49e-2-2.62e-3)/4.49e-2)
     return m
 
 
