@@ -48,6 +48,8 @@ from idaes.core.util.constants import Constants
 from enum import Enum
 
 from watertap.core import ControlVolume0DBlock, InitializationMixin
+from watertap.costing.unit_models.electrodialysis import cost_electrodialysis
+
 
 __author__ = " Xiangyu Bi, Austin Ladshaw,"
 
@@ -2049,7 +2051,7 @@ class Electrodialysis0DData(InitializationMixin, UnitModelBlockData):
         super().calculate_scaling_factors()
         # Scaling factors that user may setup
         # The users are highly encouraged to provide scaling factors for assessable vars below.
-        # Not providing these vars will give a warning.
+        # Not providing these vgitars will give a warning.
         if (
             iscale.get_scaling_factor(self.solute_diffusivity_membrane, warning=True)
             is None
@@ -2487,3 +2489,7 @@ class Electrodialysis0DData(InitializationMixin, UnitModelBlockData):
 
     def get_power_electrical(self, time_point=0):
         return self.power_electrical[time_point]
+
+    @property
+    def default_costing_method(self):
+        return cost_electrodialysis
