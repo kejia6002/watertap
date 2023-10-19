@@ -73,8 +73,8 @@ def main():
         has_nonohmic_potential_membrane=False,
         has_Nernst_diffusion_layer=False,
         # pressure_drop_method=PressureDropMethod.Darcy_Weisbach,
-        pressure_drop_method=PressureDropMethod.experimental,
-        friction_factor_method=FrictionFactorMethod.Gurreri,
+        pressure_drop_method=PressureDropMethod.Darcy_Weisbach,
+        friction_factor_method=FrictionFactorMethod.fix,
         hydraulic_diameter_method=HydraulicDiameterMethod.fixed,
     )
     assert_units_consistent(m)
@@ -152,11 +152,17 @@ def main():
     m.fs.EDstack.hydraulic_diameter.fix(4.47e-4) if hasattr(
         m.fs.EDstack, "hydraulic_diameter"
     ) else 0
+
     # m.fs.EDstack.hydraulic_diameter.fix(3.47e-4) if hasattr(
     #     m.fs.EDstack, "hydraulic_diameter") else 0
     # m.fs.EDstack.hydraulic_diameter.fix(2*7.1e-4)
 
-    print("nnnnnn") if hasattr(m.fs.EDstack, "hydraulic_diameter") else print("yyyy")
+    print("yes it has hydraulic diameter") if hasattr(
+        m.fs.EDstack, "hydraulic_diameter"
+    ) else print("No it doesn't have hydraulic diameter")
+    print("yes it has diffus_mass") if hasattr(m.fs.EDstack, "diffus_mass") else print(
+        "No it doesn't have diffus_mass"
+    )
 
     # hydraulic_diameter_conventional = (
     #         2*m.fs.EDstack.channel_height() *
@@ -165,13 +171,17 @@ def main():
     #         (m.fs.EDstack.channel_height() +
     #          m.fs.EDstack.cell_width()) ** -1
     # )
-    # spacer_specific_area = 1e4
-    #
-    # hydraulic_diameter_specified = (
-    #         4 * m.fs.EDstack.spacer_porosity() *
-    #         (2 * m.fs.EDstack.channel_height() ** -1 +
-    #         (1 - m.fs.EDstack.spacer_porosity()) *
-    #          spacer_specific_area)**-1)
+    spacer_specific_area = 1e4
+
+    hydraulic_diameter_specified = (
+        4
+        * m.fs.EDstack.spacer_porosity()
+        * (
+            2 * m.fs.EDstack.channel_height() ** -1
+            + (1 - m.fs.EDstack.spacer_porosity()) * spacer_specific_area
+        )
+        ** -1
+    )
     # friction_factor_Gurreri = (4*50.6*m.fs.EDstack.spacer_porosity() ** -7.06*m.fs.EDstack.N_Re() ** -1)
     # friction_factor_Kuroda = (4 * 9.6 * m.fs.EDstack.spacer_porosity() ** -1 * m.fs.EDstack.N_Re() ** -0.5)
     # print("friction_factor_Gurreri", friction_factor_Gurreri)
